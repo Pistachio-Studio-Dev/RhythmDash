@@ -1,0 +1,5 @@
+{
+    "EnableConsole": false,
+    "EnableTelemetry": true,
+    "EnableTeleport": false
+}

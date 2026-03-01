@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d83685591f63164d948a61e236447a5, type: 3}
+  m_Name: MiniMap Settings
+  m_EditorClassIdentifier: 
+  safeAreaMargin: {x: 55, y: 200}
+  panelShortEdgeFactor: 0.28
+  minPanelHeight: 500
+  maxPanelHeight: 800
+  panelAspect: 0.68
+  cardPadding: 18
+  trackPaddingRatio: 0.15
+  trackOuterWidth: 18
+  trackInnerWidth: 12
+  checkpointRadius: 13
+  nextCheckpointRadius: 16
+  finishBarLength: 26
+  finishBarWidth: 8
+  radarWorldRadius: 120
+  radarEdgePadding: 20
+  trackFadeStartNormalized: 0.58
+  trackEdgeAlpha: 0.04
+  aiFadeStartNormalized: 0.72
+  aiEdgeAlpha: 0
+  pointOfInterestEdgeAlpha: 0.12
+  playerMarkerSize: 30
+  aiMarkerSize: 24
+  markerSmoothing: 16
+  finishedMarkerAlpha: 0.35
+  trackOuterColor: {r: 0.08, g: 0.09, b: 0.12, a: 0.95}
+  trackInnerColor: {r: 0.94, g: 0.96, b: 0.99, a: 0.98}
+  checkpointColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+  completedCheckpointColor: {r: 0.26, g: 0.9, b: 0.52, a: 1}
+  nextCheckpointColor: {r: 0.2, g: 0.82, b: 1, a: 1}
+  playerMarkerColor: {r: 0.13, g: 0.2, b: 0.8, a: 1}
+  playerMarkerOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+  playerMarkerGlowColor: {r: 1, g: 0.84, b: 0.78, a: 0.55}
+  aiMarkerColor: {r: 1, g: 0.86, b: 0.24, a: 1}
+  aiMarkerOutlineColor: {r: 0.08, g: 0.08, b: 0.1, a: 0.95}
+  startFinishPrimaryColor: {r: 1, g: 1, b: 1, a: 1}
+  startFinishSecondaryColor: {r: 0.08, g: 0.08, b: 0.08, a: 1}
+  useManualRotationOverride: 0
+  manualRotationOffsetDegrees: 0
+  showInCountdown: 0
+  showInRacing: 1
+  showInFinished: 0

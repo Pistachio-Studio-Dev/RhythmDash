@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4177b4719526475ab8cddeac64326032, type: 3}
+  m_Name: GlobalConfig
+  m_EditorClassIdentifier: 
+  DiscordTelemetryServer: https://discord.com/api/webhooks/1492327773442932929/4L5ThLEnpLYCL3abM52O-8YZc3pRFxr2oupX5kbwJBkH95FcpF7IOn5Oj-uZJRnCZy5s
+  RuntimeSettingsPath: RuntimeSettings.json
+  ScenePath: Assets/Scenes/
+  MusicPath: Audio/Music/
+  InitScene: Init
+  MainMenuScene: Main
+  LevelSceneList:
+  - TutorialLevel
+  - Level1
+  MusicDelayDuration: 1
+  BeatDelayDuration: 1
+  NotificationDuration: 3
+  BeatIndicatorTimeOffset: 0.08
+  BeatVibrationDuration: 0.15
+  BeatVibrationStrengthLow: 1
+  BeatVibrationStrengthHigh: 1
+  DualSenseBeatVibrationDuration: 0.03
+  DualSenseBeatVibrationStrengthLow: 0.8
+  DualSenseBeatVibrationStrengthHigh: 0.8
+  LapsPerSession: 3
+  BeatIndicatorAlpha: 0.38
+  FastSpeedThreshold: 50
+  MediumSpeedThreshold: 25
+  SceneTransitionSettings: {fileID: 11400000, guid: f04fb49a520073f4ba0589ecb589678f, type: 2}
+  PauseTransitionSettings: {fileID: 11400000, guid: 3aa8ff8a1d303174b827da3c9e96225b, type: 2}
+  SceneTransitionDelayDuration: 0.05
+  PauseTransitionDelayDuration: 0.1
+  SlowAccentColor: {r: 0.9, g: 0.22, b: 0.18, a: 1}
+  MediumAccentColor: {r: 1, g: 0.58, b: 0.16, a: 1}
+  FastAccentColor: {r: 0.23, g: 0.84, b: 0.42, a: 1}
+  GateObjectName: Start Finish Line
+  CheckpointName: Checkpoints
+  PostProcessBlendSpeed: 18
+  PostProcessDistortionMaxIntensity: 0.5
+  PostProcessChromaticAberrationMaxIntensity: 0.8
+  PowerUpStarDuration: 5
+  PowerUpWingBoostDuration: 3
+  PowerUpWingBoostSpeedMultiplier: 1.6
+  PowerUpStunDuration: 0.5

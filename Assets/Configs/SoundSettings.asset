@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d9c6a35099e46849bdd8012acbc8e82, type: 3}
+  m_Name: SoundSettings
+  m_EditorClassIdentifier: 
+  SoundList:
+  - Name: BeatHitFailed
+    Clip: {fileID: 8300000, guid: 858355868cc90de40bc607814d1a24e3, type: 3}
+    Volume: 0.15
+  - Name: CollectedPowerup
+    Clip: {fileID: 8300000, guid: a9577d5f5d92743fca17a0ae74153075, type: 3}
+    Volume: 0.8
+  - Name: Countdown
+    Clip: {fileID: 8300000, guid: b1ea54cccf02d324daa23472389ee26f, type: 3}
+    Volume: 0.7
+  - Name: RaceStart
+    Clip: {fileID: 8300000, guid: cd525abd5e665b549b560b45499d22ca, type: 3}
+    Volume: 1
+  - Name: RaceFinish
+    Clip: {fileID: 8300000, guid: caf4153850fd9c749af911e4e476320d, type: 3}
+    Volume: 0.7
