@@ -1,0 +1,196 @@
+name: CI
+run-name: "Build ${{ inputs.branch }} ${{ inputs.commit_id }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        required: true
+        default: 'main'
+      commit_id:
+        description: 'Commit ID (optional)'
+        required: false
+        type: string
+
+
+jobs:
+  run-ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ------- Windows build ----------
+          - platform: StandaloneWindows64
+            runner: windows-latest
+            unity: 6000.0.65f1
+            project: RhythmDash
+          # ------- macOS build -----------
+          - platform: StandaloneOSX
+            runner: macos-latest
+            unity: 6000.0.65f1
+            project: RhythmDash
+
+    name: Build - ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Checkout Repository
+        shell: bash
+        run: |
+          git clone https://${{ secrets.PAT }}@${{ secrets.ENTERPRISE_DOMAIN }}/${{ secrets.TARGET_REPO }} workspace
+          cd workspace
+
+          if [ -n "${{ github.event.inputs.commit_id }}" ]; then
+            echo "Checking out specific commit: ${{ github.event.inputs.commit_id }}"
+            git checkout ${{ github.event.inputs.commit_id }}
+          else
+            echo "Checking out branch: ${{ github.event.inputs.branch }}"
+            git checkout ${{ github.event.inputs.branch }}
+          fi
+
+          echo "Pulling LFS objects..."
+          git lfs pull
+
+      - name: Get Commit Info
+        id: commit_info
+        shell: bash
+        working-directory: workspace
+        run: |
+          COMMIT_ID=$(git rev-parse HEAD)
+          COMMIT_SHORT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          COMMIT_AUTHOR=$(git log -1 --pretty='%an')
+          echo "commit_id=$COMMIT_ID" >> "$GITHUB_OUTPUT"
+          echo "commit_short_sha=$COMMIT_SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "commit_msg=$COMMIT_MSG" >> "$GITHUB_OUTPUT"
+          echo "commit_author=$COMMIT_AUTHOR" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: workspace/Library
+          key: Library-${{ matrix.unity }}-${{ matrix.platform }}
+          restore-keys: |
+            Library-${{ matrix.unity }}-
+
+      - name: Install Media Foundation
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          if (-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
+            throw "Install-WindowsFeature is unavailable on this runner."
+          }
+
+          Import-Module ServerManager
+
+          $feature = Get-WindowsFeature -Name Server-Media-Foundation
+          if ($feature.Installed) {
+            Write-Host "Server-Media-Foundation is already installed."
+            exit 0
+          }
+
+          $result = Install-WindowsFeature -Name Server-Media-Foundation
+          if (-not $result.Success) {
+            throw "Failed to install Server-Media-Foundation."
+          }
+
+          if ($result.RestartNeeded -ne 'No') {
+            throw "Server-Media-Foundation requires a restart on this runner, which GitHub-hosted jobs cannot perform."
+          }
+
+      - name: Build project
+        id: build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: workspace
+          unityVersion: ${{ matrix.unity }}
+          targetPlatform: ${{ matrix.platform }}
+          buildName: ${{ matrix.project }}
+          cacheUnityInstallationOnMac: true
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.project }}-${{ matrix.platform }}-Build-${{ steps.commit_info.outputs.commit_short_sha }}
+          path: build/${{ matrix.platform }}/
+
+      - name: Send Notification
+        if: always()
+        shell: bash
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          STATUS: ${{ job.status }}
+          PLATFORM: ${{ matrix.platform }}
+          COMMIT_ID: ${{ steps.commit_info.outputs.commit_id }}
+          COMMIT_MSG: ${{ steps.commit_info.outputs.commit_msg }}
+          COMMIT_AUTHOR: ${{ steps.commit_info.outputs.commit_author }}
+          BRANCH: ${{ inputs.branch }}
+          TARGET_REPO: ${{ secrets.TARGET_REPO }}
+          DOMAIN: ${{ secrets.ENTERPRISE_DOMAIN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "No Discord Webhook configured. Skipping."
+            exit 0
+          fi
+
+          REPO="${TARGET_REPO%.git}"
+          COMMIT_ID="${COMMIT_ID:-None}"
+          COMMIT_MSG="${COMMIT_MSG:-N/A}"
+          COMMIT_AUTHOR="${COMMIT_AUTHOR:-N/A}"
+          BRANCH="${BRANCH:-N/A}"
+
+          if [ "$COMMIT_ID" != "None" ]; then
+            COMMIT_URL="https://${DOMAIN}/${REPO}/commit/${COMMIT_ID}"
+            COMMIT_STR="[${COMMIT_ID:0:7}]($COMMIT_URL)"
+          else
+            COMMIT_STR="Unknown"
+          fi
+
+          if [ "$STATUS" == "success" ]; then
+            COLOR=3066993 # Green
+            TITLE="Build Success: $PLATFORM"
+            EMOJI='"\u2705"'
+          else
+            COLOR=15158332 # Red
+            TITLE="Build Failed: $PLATFORM"
+            EMOJI='"\u274c"'
+          fi
+
+          jq -n -a \
+            --arg title "$TITLE" \
+            --argjson emj "$EMOJI" \
+            --arg url "$RUN_URL" \
+            --arg desc "The build for **$PLATFORM** completed with status: **$STATUS**" \
+            --arg color "$COLOR" \
+            --arg commit_str "$COMMIT_STR" \
+            --arg commit_msg "$COMMIT_MSG" \
+            --arg branch_name "$BRANCH" \
+            --arg author_name "$COMMIT_AUTHOR" \
+            --arg artifacts_url "$RUN_URL" \
+            '{
+              embeds: [{
+                title: ($emj + " " + $title),
+                url: $url,
+                description: $desc,
+                color: ($color | tonumber),
+                fields: [
+                  { name: "Branch", value: $branch_name, inline: true },
+                  { name: "Commit", value: $commit_str, inline: true },
+                  { name: "Author", value: $author_name, inline: true },
+                  { name: "Message", value: $commit_msg, inline: false },
+                  { name: "Artifacts & Logs", value: ("[View Run Details](" + $artifacts_url + ")"), inline: false }
+                ]
+              }]
+            }' > payload.json
+
+          curl -sS -H "Content-Type: application/json" -d @payload.json "$DISCORD_WEBHOOK"
+          

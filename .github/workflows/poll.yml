@@ -1,0 +1,69 @@
+name: Poll
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    strategy:
+      matrix:
+        branch: ['main', 'release']
+    
+    steps:
+      - name: Fetch Latest Commit
+        id: fetch_commit
+        shell: bash
+        run: |
+          set -e
+          
+          TARGET_REPO="${{ secrets.TARGET_REPO }}"
+          REPO="${TARGET_REPO%.git}"
+          API_URL="https://${{ secrets.ENTERPRISE_DOMAIN }}/api/v3/repos/$REPO/commits/${{ matrix.branch }}"
+          
+          RESPONSE=$(curl -s -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.PAT }}" \
+            "$API_URL")
+          
+          LATEST_SHA=$(echo "$RESPONSE" | jq -r .sha)
+          
+          if [ "$LATEST_SHA" == "null" ] || [ -z "$LATEST_SHA" ]; then
+            echo "Branch ${{ matrix.branch }} might not exist or failed to fetch commit info. Response: $RESPONSE"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          echo "$LATEST_SHA" > latest_sha.txt
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Cache SHA
+        if: steps.fetch_commit.outputs.found == 'true'
+        id: cache-sha
+        uses: actions/cache@v4
+        with:
+          path: latest_sha.txt
+          key: branch-${{ matrix.branch }}-commit-${{ hashFiles('latest_sha.txt') }}
+
+      - name: Trigger Build
+        if: steps.fetch_commit.outputs.found == 'true' && steps.cache-sha.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_SHA=$(cat latest_sha.txt)
+          
+          EXISTING_RUNS=$(gh run list --repo "${{ github.repository }}" --workflow=ci.yml --json displayTitle -q '[.[].displayTitle] | join(" ")')
+          
+          if [[ "$EXISTING_RUNS" == *"$LATEST_SHA"* ]]; then
+            echo "CI already runs for target commit $LATEST_SHA. Skipping trigger."
+          else
+            echo "Triggering CI for $LATEST_SHA..."
+            gh workflow run ci.yml \
+               --repo "${{ github.repository }}" \
+               -f branch="${{ matrix.branch }}" \
+               -f commit_id="$LATEST_SHA"
+          fi
